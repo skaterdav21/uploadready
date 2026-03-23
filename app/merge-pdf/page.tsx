@@ -29,8 +29,11 @@ async function mergePdfFiles(files: File[]): Promise<OutputFile> {
   }
 
   const mergedBytes = await mergedPdf.save();
+  const safeBytes = Uint8Array.from(mergedBytes);
 
-  const blob = new Blob([mergedBytes.buffer], { type: "application/pdf" });
+  const blob = new Blob([safeBytes], {
+    type: "application/pdf",
+  });
 
   return {
     url: URL.createObjectURL(blob),
@@ -83,11 +86,7 @@ export default function MergePdfPage() {
       const merged = await mergePdfFiles(files);
       setResult(merged);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to merge PDFs."
-      );
+      setError(err instanceof Error ? err.message : "Failed to merge PDFs.");
     } finally {
       setLoading(false);
     }
@@ -106,7 +105,8 @@ export default function MergePdfPage() {
         <div className="section-head">
           <h1>Merge PDF</h1>
           <p>
-            Combine multiple PDF files into a single document directly in your browser.
+            Combine multiple PDF files into a single document directly in your
+            browser.
           </p>
         </div>
 
@@ -154,9 +154,7 @@ export default function MergePdfPage() {
         </div>
 
         {!result ? (
-          <div className="empty-state">
-            Your merged PDF will appear here.
-          </div>
+          <div className="empty-state">Your merged PDF will appear here.</div>
         ) : (
           <div className="result-card">
             <div>
