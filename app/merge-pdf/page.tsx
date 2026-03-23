@@ -30,7 +30,7 @@ async function mergePdfFiles(files: File[]): Promise<OutputFile> {
 
   const mergedBytes = await mergedPdf.save();
 
-  const blob = new Blob([mergedBytes], { type: "application/pdf" });
+  const blob = new Blob([mergedBytes.buffer], { type: "application/pdf" });
 
   return {
     url: URL.createObjectURL(blob),
