@@ -1,7 +1,8 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useMemo, useRef, useState } from "react";
-import heic2any from "heic2any";
 
 type OutputFile = {
   name: string;
@@ -16,6 +17,10 @@ function formatBytes(bytes: number) {
 }
 
 async function convertHeicFile(file: File, quality: number): Promise<OutputFile> {
+  // ✅ dynamic import (fixes window error)
+  const heicModule = await import("heic2any");
+  const heic2any = heicModule.default;
+
   const converted = await heic2any({
     blob: file,
     toType: "image/jpeg",
@@ -65,7 +70,11 @@ export default function HeicToJpgPage() {
 
     const accepted = Array.from(list).filter((file) => {
       const lower = file.name.toLowerCase();
-      return lower.endsWith(".heic") || file.type === "image/heic" || file.type === "image/heif";
+      return (
+        lower.endsWith(".heic") ||
+        file.type === "image/heic" ||
+        file.type === "image/heif"
+      );
     });
 
     if (accepted.length === 0) {
@@ -89,13 +98,19 @@ export default function HeicToJpgPage() {
 
     try {
       const output: OutputFile[] = [];
+
       for (const file of files) {
         const converted = await convertHeicFile(file, quality);
         output.push(converted);
       }
+
       setResults(output);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong while converting.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong while converting."
+      );
     } finally {
       setLoading(false);
     }
@@ -115,7 +130,7 @@ export default function HeicToJpgPage() {
           <h1>HEIC to JPG</h1>
           <p>
             Convert iPhone HEIC photos into JPG files directly in your browser so
-            websites and forms are more likely to accept them.
+            websites and forms accept them.
           </p>
         </div>
 
@@ -163,12 +178,17 @@ export default function HeicToJpgPage() {
         </div>
 
         <div className="hero-actions">
-          <button type="button" className="btn btn-primary" onClick={runConversion} disabled={loading}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={runConversion}
+            disabled={loading}
+          >
             {loading ? "Converting..." : "Convert to JPG"}
           </button>
         </div>
 
-        {error ? <div className="error-box">{error}</div> : null}
+        {error && <div className="error-box">{error}</div>}
 
         <div className="ad-box">Ad placeholder</div>
       </section>
@@ -180,7 +200,9 @@ export default function HeicToJpgPage() {
         </div>
 
         {results.length === 0 ? (
-          <div className="empty-state">Your converted JPG files will appear here.</div>
+          <div className="empty-state">
+            Your converted JPG files will appear here.
+          </div>
         ) : (
           <div className="results-list">
             {results.map((item) => (
@@ -201,39 +223,6 @@ export default function HeicToJpgPage() {
             ))}
           </div>
         )}
-      </section>
-
-      <section className="section">
-        <div className="section-head">
-          <h2>Related tools</h2>
-          <p>Pair conversion with these tools when you need even cleaner files.</p>
-        </div>
-
-        <div className="card-grid">
-          <a className="tool-card" href="/resize-image">
-            <div className="tool-card-top">
-              <h3>Resize Image</h3>
-              <span>Ready</span>
-            </div>
-            <p>Resize converted JPG files for forms and websites.</p>
-          </a>
-
-          <a className="tool-card" href="/compress-image">
-            <div className="tool-card-top">
-              <h3>Compress Image</h3>
-              <span>Ready</span>
-            </div>
-            <p>Reduce the size of converted images for tighter upload limits.</p>
-          </a>
-
-          <a className="tool-card" href="/compress-pdf">
-            <div className="tool-card-top">
-              <h3>Compress PDF</h3>
-              <span>Later</span>
-            </div>
-            <p>Keep working on upload-friendly document workflows.</p>
-          </a>
-        </div>
       </section>
     </main>
   );
