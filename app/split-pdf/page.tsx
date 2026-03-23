@@ -72,7 +72,8 @@ async function splitPdfFile(
       newPdf.addPage(page);
 
       const newBytes = await newPdf.save();
-      const blob = new Blob([newBytes.buffer], { type: "application/pdf" });
+      const safeBytes = Uint8Array.from(newBytes);
+      const blob = new Blob([safeBytes], { type: "application/pdf" });
       const base = file.name.replace(/\.pdf$/i, "");
 
       outputs.push({
@@ -96,7 +97,8 @@ async function splitPdfFile(
   copiedPages.forEach((page) => newPdf.addPage(page));
 
   const newBytes = await newPdf.save();
-  const blob = new Blob([newBytes.buffer], { type: "application/pdf" });
+  const safeBytes = Uint8Array.from(newBytes);
+  const blob = new Blob([safeBytes], { type: "application/pdf" });
   const base = file.name.replace(/\.pdf$/i, "");
 
   return [
@@ -262,6 +264,39 @@ export default function SplitPdfPage() {
             ))}
           </div>
         )}
+      </section>
+
+      <section className="section">
+        <div className="section-head">
+          <h2>Related tools</h2>
+          <p>Useful PDF tools that pair well with splitting.</p>
+        </div>
+
+        <div className="card-grid">
+          <a className="tool-card" href="/merge-pdf">
+            <div className="tool-card-top">
+              <h3>Merge PDF</h3>
+              <span>Ready</span>
+            </div>
+            <p>Combine multiple PDF files into one clean document.</p>
+          </a>
+
+          <a className="tool-card" href="/compress-pdf">
+            <div className="tool-card-top">
+              <h3>Compress PDF</h3>
+              <span>Later</span>
+            </div>
+            <p>Reduce PDF size for upload limits.</p>
+          </a>
+
+          <a className="tool-card" href="/resize-image">
+            <div className="tool-card-top">
+              <h3>Resize Image</h3>
+              <span>Ready</span>
+            </div>
+            <p>Useful when you are preparing image files alongside documents.</p>
+          </a>
+        </div>
       </section>
     </main>
   );
