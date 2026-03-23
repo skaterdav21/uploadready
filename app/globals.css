@@ -321,3 +321,53 @@ a {
     font-size: 16px;
   }
 }
+.contact-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.form-row {
+  display: grid;
+  gap: 8px;
+}
+
+.form-row label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.form-row input,
+.form-row select,
+.form-row textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: white;
+  color: var(--text);
+  padding: 14px 16px;
+  font: inherit;
+}
+
+.form-row input:focus,
+.form-row select:focus,
+.form-row textarea:focus {
+  outline: 2px solid rgba(37, 99, 235, 0.15);
+  border-color: var(--primary);
+}
+
+.legal-copy {
+  margin-top: 18px;
+}
+
+.legal-copy h2 {
+  margin: 22px 0 10px;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+
+.legal-copy p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.8;
+}
