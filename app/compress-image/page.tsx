@@ -1,5 +1,11 @@
 "use client";
 
+export const metadata = {
+  title: "Compress Image — Reduce File Size for Upload",
+  description:
+    "Compress images so they meet upload limits. Perfect for screenshots, forms, and email attachments.",
+};
+
 import { useMemo, useRef, useState } from "react";
 import JSZip from "jszip";
 import LoadingOverlay from "../../components/LoadingOverlay";
