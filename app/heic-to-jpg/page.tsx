@@ -1,5 +1,11 @@
 "use client";
 
+export const metadata = {
+  title: "Convert HEIC to JPG — Fix iPhone Upload Issues",
+  description:
+    "Convert iPhone HEIC photos to JPG so websites and job applications accept them.",
+};
+
 export const dynamic = "force-dynamic";
 
 import { useMemo, useRef, useState } from "react";
