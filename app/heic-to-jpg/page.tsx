@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useMemo, useRef, useState } from "react";
+import JSZip from "jszip";
 import LoadingOverlay from "../../components/LoadingOverlay";
 
 type OutputFile = {
@@ -43,11 +44,28 @@ async function convertHeicFile(file: File, quality: number): Promise<OutputFile>
   };
 }
 
+async function downloadAllAsZip(results: OutputFile[], zipName: string) {
+  const zip = new JSZip();
+
+  for (const item of results) {
+    const response = await fetch(item.url);
+    const blob = await response.blob();
+    zip.file(item.name, blob);
+  }
+
+  const content = await zip.generateAsync({ type: "blob" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(content);
+  a.download = zipName;
+  a.click();
+}
+
 export default function HeicToJpgPage() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [quality, setQuality] = useState<number>(0.9);
   const [loading, setLoading] = useState(false);
+  const [zipLoading, setZipLoading] = useState(false);
   const [error, setError] = useState("");
   const [results, setResults] = useState<OutputFile[]>([]);
 
@@ -123,9 +141,19 @@ export default function HeicToJpgPage() {
     a.click();
   }
 
+  async function handleZipDownload() {
+    try {
+      setZipLoading(true);
+      await downloadAllAsZip(results, "uploadready-heic-to-jpg.zip");
+    } finally {
+      setZipLoading(false);
+    }
+  }
+
   return (
     <main className="page">
       {loading && <LoadingOverlay text="Converting HEIC images..." />}
+      {zipLoading && <LoadingOverlay text="Creating ZIP download..." />}
 
       <section className="section">
         <div className="section-head">
@@ -206,24 +234,37 @@ export default function HeicToJpgPage() {
             Your converted JPG files will appear here.
           </div>
         ) : (
-          <div className="results-list">
-            {results.map((item) => (
-              <div key={item.url} className="result-card">
-                <div>
-                  <h3>{item.name}</h3>
-                  <p>{formatBytes(item.size)}</p>
-                </div>
+          <>
+            <div className="hero-actions hero-actions-left">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleZipDownload}
+                disabled={zipLoading}
+              >
+                {zipLoading ? "Creating ZIP..." : "Download all as ZIP"}
+              </button>
+            </div>
 
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => downloadFile(item.url, item.name)}
-                >
-                  Download
-                </button>
-              </div>
-            ))}
-          </div>
+            <div className="results-list">
+              {results.map((item) => (
+                <div key={item.url} className="result-card">
+                  <div>
+                    <h3>{item.name}</h3>
+                    <p>{formatBytes(item.size)}</p>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => downloadFile(item.url, item.name)}
+                  >
+                    Download
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </section>
     </main>
