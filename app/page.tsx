@@ -44,7 +44,7 @@ export default function Home() {
   const problems = [
     {
       title: "Your resume PDF is too large",
-      body: "Compress it before uploading to a job application portal that rejects big files.",
+      body: "Use PDF compression when an application portal rejects your resume because of file size limits.",
       href: "/compress-pdf",
     },
     {
@@ -142,6 +142,27 @@ export default function Home() {
         <div className="trust-card">Upload-friendly</div>
       </section>
 
+      <section className="section">
+        <div className="section-head">
+          <h2>Popular guided workflow</h2>
+          <p>
+            Not sure which tool to use for a job application? Start with the guided resume page.
+          </p>
+        </div>
+
+        <div className="card-grid">
+          <a className="tool-card tool-card-animated" href="/resume-upload-fixer">
+            <div className="tool-card-top">
+              <h3>Resume Upload Fixer</h3>
+              <span>Start here</span>
+            </div>
+            <p>
+              Fix resume PDFs, combine cover letters, resize headshots, and get job application files ready fast.
+            </p>
+          </a>
+        </div>
+      </section>
+
       <section id="problem-first" className="section">
         <div className="section-head">
           <h2>Start with the problem you are trying to solve</h2>
@@ -185,11 +206,11 @@ export default function Home() {
           </p>
 
           <div className="hero-actions hero-actions-left">
-            <a className="btn btn-primary" href="/compress-pdf">
-              Fix a resume PDF
+            <a className="btn btn-primary" href="/resume-upload-fixer">
+              Open resume fixer
             </a>
-            <a className="btn btn-secondary" href="/merge-pdf">
-              Merge application PDFs
+            <a className="btn btn-secondary" href="/compress-pdf">
+              Fix a resume PDF
             </a>
           </div>
         </div>
