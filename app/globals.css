@@ -92,6 +92,12 @@ a {
   font-weight: 600;
   transition: 0.2s ease;
   border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-primary {
@@ -99,7 +105,7 @@ a {
   color: white;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   background: var(--primary-dark);
 }
 
@@ -109,7 +115,7 @@ a {
   border-color: var(--border);
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
   background: var(--surface-soft);
 }
 
@@ -156,6 +162,7 @@ a {
   box-shadow: var(--shadow);
 }
 
+.section-head h1,
 .section-head h2 {
   margin: 0;
   font-size: 28px;
@@ -293,34 +300,6 @@ a {
   color: var(--text);
 }
 
-@media (max-width: 900px) {
-  .card-grid,
-  .trust-strip,
-  .split-panel {
-    grid-template-columns: 1fr;
-  }
-
-  .footer {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-@media (max-width: 640px) {
-  .page {
-    width: min(100% - 20px, 1120px);
-    padding-top: 16px;
-  }
-
-  .hero,
-  .section {
-    padding: 20px;
-  }
-
-  .hero-copy {
-    font-size: 16px;
-  }
-}
 .contact-form {
   display: grid;
   gap: 16px;
@@ -371,6 +350,7 @@ a {
   color: var(--muted);
   line-height: 1.8;
 }
+
 .upload-box {
   margin-top: 22px;
   border: 2px dashed #cbd5e1;
@@ -465,16 +445,22 @@ a {
   color: var(--muted);
 }
 
-@media (max-width: 700px) {
-  .tool-controls {
-    grid-template-columns: 1fr;
-  }
-
-  .result-card {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
 }
+
+.preview-img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+
 .loading-overlay {
   position: fixed;
   inset: 0;
@@ -494,6 +480,11 @@ a {
   box-shadow: var(--shadow);
 }
 
+.loading-box p {
+  margin: 0;
+  color: var(--muted);
+}
+
 .spinner {
   width: 36px;
   height: 36px;
@@ -507,5 +498,45 @@ a {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .card-grid,
+  .trust-strip,
+  .split-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 700px) {
+  .tool-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .result-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    width: min(100% - 20px, 1120px);
+    padding-top: 16px;
+  }
+
+  .hero,
+  .section {
+    padding: 20px;
+  }
+
+  .hero-copy {
+    font-size: 16px;
   }
 }
