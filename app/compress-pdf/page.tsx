@@ -1,5 +1,11 @@
 "use client";
 
+export const metadata = {
+  title: "Compress PDF — Reduce File Size for Upload",
+  description:
+    "Shrink PDF files for job applications, tax forms, and upload limits.",
+};
+
 export const dynamic = "force-dynamic";
 
 import { useRef, useState } from "react";
