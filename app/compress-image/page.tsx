@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import LoadingOverlay from "../../components/LoadingOverlay";
 
 type OutputFile = {
   name: string;
@@ -72,6 +73,7 @@ async function compressSingleImage(file: File, quality: number): Promise<OutputF
 export default function CompressImagePage() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [files, setFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [quality, setQuality] = useState<number>(0.72);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -88,10 +90,16 @@ export default function CompressImagePage() {
     setResults([]);
   }
 
+  function clearPreviewUrls() {
+    previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    setPreviewUrls([]);
+  }
+
   function handleFiles(list: FileList | null) {
     if (!list) return;
 
     clearOldResults();
+    clearPreviewUrls();
     setError("");
 
     const accepted = Array.from(list).filter((file) => {
@@ -112,6 +120,7 @@ export default function CompressImagePage() {
     }
 
     setFiles(accepted);
+    setPreviewUrls(accepted.map((file) => URL.createObjectURL(file)));
   }
 
   async function runCompression() {
@@ -147,6 +156,8 @@ export default function CompressImagePage() {
 
   return (
     <main className="page">
+      {loading && <LoadingOverlay text="Compressing images..." />}
+
       <section className="section">
         <div className="section-head">
           <h1>Compress Image</h1>
@@ -179,6 +190,14 @@ export default function CompressImagePage() {
           />
         </div>
 
+        {previewUrls.length > 0 && (
+          <div className="preview-grid">
+            {previewUrls.map((url, i) => (
+              <img key={i} src={url} alt="preview" className="preview-img" />
+            ))}
+          </div>
+        )}
+
         <div className="tool-controls">
           <div className="form-row">
             <label htmlFor="quality">Quality</label>
@@ -200,7 +219,12 @@ export default function CompressImagePage() {
         </div>
 
         <div className="hero-actions">
-          <button type="button" className="btn btn-primary" onClick={runCompression} disabled={loading}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={runCompression}
+            disabled={loading || files.length === 0}
+          >
             {loading ? "Compressing..." : "Compress images"}
           </button>
         </div>
@@ -268,7 +292,7 @@ export default function CompressImagePage() {
           <a className="tool-card" href="/heic-to-jpg">
             <div className="tool-card-top">
               <h3>HEIC to JPG</h3>
-              <span>Coming next</span>
+              <span>Ready</span>
             </div>
             <p>Convert iPhone photos into a more compatible format.</p>
           </a>
@@ -276,9 +300,9 @@ export default function CompressImagePage() {
           <a className="tool-card" href="/compress-pdf">
             <div className="tool-card-top">
               <h3>Compress PDF</h3>
-              <span>Later</span>
+              <span>Ready</span>
             </div>
-            <p>Reduce document size for upload limits.</p>
+            <p>Reduce PDF size for upload limits.</p>
           </a>
         </div>
       </section>
