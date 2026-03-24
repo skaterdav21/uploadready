@@ -144,9 +144,9 @@ export default function Home() {
 
       <section className="section">
         <div className="section-head">
-          <h2>Popular guided workflow</h2>
+          <h2>Popular guided help pages</h2>
           <p>
-            Not sure which tool to use for a job application? Start with the guided resume page.
+            These pages are built for real situations people search for, not just tool names.
           </p>
         </div>
 
@@ -158,6 +158,26 @@ export default function Home() {
             </div>
             <p>
               Fix resume PDFs, combine cover letters, resize headshots, and get job application files ready fast.
+            </p>
+          </a>
+
+          <a className="tool-card tool-card-animated" href="/pdf-too-large-to-upload">
+            <div className="tool-card-top">
+              <h3>PDF Too Large to Upload?</h3>
+              <span>Guide</span>
+            </div>
+            <p>
+              Fix oversized PDFs for resumes, forms, applications, and upload portals.
+            </p>
+          </a>
+
+          <a className="tool-card tool-card-animated" href="/iphone-photo-wont-upload">
+            <div className="tool-card-top">
+              <h3>iPhone Photo Won’t Upload?</h3>
+              <span>Guide</span>
+            </div>
+            <p>
+              Fix HEIC format issues, file size problems, and upload failures from iPhone photos.
             </p>
           </a>
         </div>
