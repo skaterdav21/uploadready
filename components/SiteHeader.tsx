@@ -14,6 +14,7 @@ export default function SiteHeader() {
 
         <nav className="site-nav" aria-label="Primary">
           <a href="/">Home</a>
+          <a href="/resume-upload-fixer">Resume Fixer</a>
           <a href="/resize-image">Resize Image</a>
           <a href="/compress-image">Compress Image</a>
           <a href="/heic-to-jpg">HEIC to JPG</a>
