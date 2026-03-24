@@ -175,9 +175,21 @@ export default function SplitPdfPage() {
         <div className="section-head">
           <h1>Split PDF</h1>
           <p>
-            Extract selected pages or split a PDF into individual pages directly
-            in your browser.
+            Extract selected pages or split a PDF into individual page files
+            directly in your browser.
           </p>
+        </div>
+
+        <div className="pdf-tool-nav">
+          <a href="/merge-pdf" className="pdf-tool-link">
+            Merge PDF
+          </a>
+          <a href="/split-pdf" className="pdf-tool-link pdf-tool-link-active">
+            Split PDF
+          </a>
+          <a href="/compress-pdf" className="pdf-tool-link">
+            Compress PDF
+          </a>
         </div>
 
         <div
@@ -221,7 +233,7 @@ export default function SplitPdfPage() {
           <button
             className="btn btn-primary"
             onClick={runSplit}
-            disabled={loading}
+            disabled={loading || !file}
           >
             {loading ? "Splitting..." : "Split PDF"}
           </button>
@@ -264,39 +276,6 @@ export default function SplitPdfPage() {
             ))}
           </div>
         )}
-      </section>
-
-      <section className="section">
-        <div className="section-head">
-          <h2>Related tools</h2>
-          <p>Useful PDF tools that pair well with splitting.</p>
-        </div>
-
-        <div className="card-grid">
-          <a className="tool-card" href="/merge-pdf">
-            <div className="tool-card-top">
-              <h3>Merge PDF</h3>
-              <span>Ready</span>
-            </div>
-            <p>Combine multiple PDF files into one clean document.</p>
-          </a>
-
-          <a className="tool-card" href="/compress-pdf">
-            <div className="tool-card-top">
-              <h3>Compress PDF</h3>
-              <span>Later</span>
-            </div>
-            <p>Reduce PDF size for upload limits.</p>
-          </a>
-
-          <a className="tool-card" href="/resize-image">
-            <div className="tool-card-top">
-              <h3>Resize Image</h3>
-              <span>Ready</span>
-            </div>
-            <p>Useful when you are preparing image files alongside documents.</p>
-          </a>
-        </div>
       </section>
     </main>
   );
