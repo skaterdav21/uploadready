@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useMemo, useRef, useState } from "react";
+import LoadingOverlay from "../../components/LoadingOverlay";
 
 type OutputFile = {
   name: string;
@@ -17,7 +18,6 @@ function formatBytes(bytes: number) {
 }
 
 async function convertHeicFile(file: File, quality: number): Promise<OutputFile> {
-  // ✅ dynamic import (fixes window error)
   const heicModule = await import("heic2any");
   const heic2any = heicModule.default;
 
@@ -125,6 +125,8 @@ export default function HeicToJpgPage() {
 
   return (
     <main className="page">
+      {loading && <LoadingOverlay text="Converting HEIC images..." />}
+
       <section className="section">
         <div className="section-head">
           <h1>HEIC to JPG</h1>
@@ -182,7 +184,7 @@ export default function HeicToJpgPage() {
             type="button"
             className="btn btn-primary"
             onClick={runConversion}
-            disabled={loading}
+            disabled={loading || files.length === 0}
           >
             {loading ? "Converting..." : "Convert to JPG"}
           </button>
