@@ -1,3 +1,9 @@
+export const metadata = {
+  title: "Fix Files for Upload — Resume, PDF, Images | UploadReady",
+  description:
+    "Fix file upload issues for resumes, job applications, forms, and portals. Compress PDFs, resize images, convert HEIC photos, and more.",
+};
+
 export default function Home() {
   const imageTools = [
     {
