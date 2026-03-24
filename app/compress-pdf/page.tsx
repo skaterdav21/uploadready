@@ -27,7 +27,6 @@ async function compressPdf(file: File): Promise<OutputFile> {
   pages.forEach((p) => newPdf.addPage(p));
 
   const newBytes = await newPdf.save();
-
   const safeBytes = Uint8Array.from(newBytes);
 
   const blob = new Blob([safeBytes], {
@@ -80,11 +79,7 @@ export default function CompressPdfPage() {
       const compressed = await compressPdf(file);
       setResult(compressed);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to compress PDF."
-      );
+      setError(err instanceof Error ? err.message : "Failed to compress PDF.");
     } finally {
       setLoading(false);
     }
@@ -118,6 +113,18 @@ export default function CompressPdfPage() {
           </p>
         </div>
 
+        <div className="pdf-tool-nav">
+          <a href="/merge-pdf" className="pdf-tool-link">
+            Merge PDF
+          </a>
+          <a href="/split-pdf" className="pdf-tool-link">
+            Split PDF
+          </a>
+          <a href="/compress-pdf" className="pdf-tool-link pdf-tool-link-active">
+            Compress PDF
+          </a>
+        </div>
+
         <div
           className="upload-box"
           onClick={() => inputRef.current?.click()}
@@ -146,7 +153,7 @@ export default function CompressPdfPage() {
           <button
             className="btn btn-primary"
             onClick={runCompression}
-            disabled={loading}
+            disabled={loading || !file}
           >
             {loading ? "Compressing..." : "Compress PDF"}
           </button>
