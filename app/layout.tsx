@@ -1,4 +1,5 @@
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 import SiteHeader from "../components/SiteHeader";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -7,6 +8,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <SiteHeader />
         {children}
+        <Analytics />
       </body>
     </html>
   );
