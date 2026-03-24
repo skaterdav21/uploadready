@@ -3,9 +3,10 @@ export default function SiteHeader() {
     <header className="site-header">
       <div className="site-header-inner">
         <a href="/" className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            <span className="brand-mark-core">↑</span>
+          <span className="brand-logo-wrap" aria-hidden="true">
+            <img src="/icon.png" alt="" className="brand-logo" />
           </span>
+
           <span className="brand-text">
             <span className="brand-name">UploadReady</span>
             <span className="brand-tag">Fix your files so they actually upload</span>
@@ -15,6 +16,8 @@ export default function SiteHeader() {
         <nav className="site-nav" aria-label="Primary">
           <a href="/">Home</a>
           <a href="/resume-upload-fixer">Resume Fixer</a>
+          <a href="/pdf-too-large-to-upload">PDF Too Large</a>
+          <a href="/iphone-photo-wont-upload">iPhone Photo Help</a>
           <a href="/resize-image">Resize Image</a>
           <a href="/compress-image">Compress Image</a>
           <a href="/heic-to-jpg">HEIC to JPG</a>
