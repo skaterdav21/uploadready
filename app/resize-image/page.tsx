@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import LoadingOverlay from "../../components/LoadingOverlay";
 
 type OutputFile = {
   name: string;
@@ -74,7 +75,11 @@ async function resizeSingleImage(
 
   const originalType = file.type || "image/jpeg";
   const outputType =
-    originalType === "image/png" ? "image/png" : originalType === "image/webp" ? "image/webp" : "image/jpeg";
+    originalType === "image/png"
+      ? "image/png"
+      : originalType === "image/webp"
+        ? "image/webp"
+        : "image/jpeg";
 
   const blob = await new Promise<Blob | null>((resolve) =>
     canvas.toBlob(resolve, outputType, outputType === "image/png" ? undefined : 0.92)
@@ -102,6 +107,7 @@ async function resizeSingleImage(
 export default function ResizeImagePage() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [files, setFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [width, setWidth] = useState<string>("1200");
   const [height, setHeight] = useState<string>("");
   const [preserveAspect, setPreserveAspect] = useState(true);
@@ -120,10 +126,16 @@ export default function ResizeImagePage() {
     setResults([]);
   }
 
+  function clearPreviewUrls() {
+    previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    setPreviewUrls([]);
+  }
+
   function handleFiles(list: FileList | null) {
     if (!list) return;
 
     clearOldResults();
+    clearPreviewUrls();
     setError("");
 
     const accepted = Array.from(list).filter((file) => {
@@ -144,6 +156,7 @@ export default function ResizeImagePage() {
     }
 
     setFiles(accepted);
+    setPreviewUrls(accepted.map((file) => URL.createObjectURL(file)));
   }
 
   async function runResize() {
@@ -198,6 +211,8 @@ export default function ResizeImagePage() {
 
   return (
     <main className="page">
+      {loading && <LoadingOverlay text="Resizing images..." />}
+
       <section className="section">
         <div className="section-head">
           <h1>Resize Image</h1>
@@ -229,6 +244,14 @@ export default function ResizeImagePage() {
             onChange={(e) => handleFiles(e.target.files)}
           />
         </div>
+
+        {previewUrls.length > 0 && (
+          <div className="preview-grid">
+            {previewUrls.map((url, i) => (
+              <img key={i} src={url} alt="preview" className="preview-img" />
+            ))}
+          </div>
+        )}
 
         <div className="tool-controls">
           <div className="form-row">
@@ -280,7 +303,12 @@ export default function ResizeImagePage() {
         </div>
 
         <div className="hero-actions">
-          <button type="button" className="btn btn-primary" onClick={runResize} disabled={loading}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={runResize}
+            disabled={loading || files.length === 0}
+          >
             {loading ? "Resizing..." : "Resize images"}
           </button>
         </div>
@@ -332,7 +360,7 @@ export default function ResizeImagePage() {
           <a className="tool-card" href="/compress-image">
             <div className="tool-card-top">
               <h3>Compress Image</h3>
-              <span>Coming next</span>
+              <span>Ready</span>
             </div>
             <p>Reduce file size after resizing.</p>
           </a>
@@ -340,7 +368,7 @@ export default function ResizeImagePage() {
           <a className="tool-card" href="/heic-to-jpg">
             <div className="tool-card-top">
               <h3>HEIC to JPG</h3>
-              <span>Coming next</span>
+              <span>Ready</span>
             </div>
             <p>Convert iPhone photos into a more upload-friendly format.</p>
           </a>
@@ -348,7 +376,7 @@ export default function ResizeImagePage() {
           <a className="tool-card" href="/compress-pdf">
             <div className="tool-card-top">
               <h3>Compress PDF</h3>
-              <span>Later</span>
+              <span>Ready</span>
             </div>
             <p>Shrink PDFs that are too large for upload limits.</p>
           </a>
