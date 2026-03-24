@@ -10,6 +10,8 @@ type OutputFile = {
   originalSize: number;
 };
 
+type OutputFormat = "original" | "jpeg" | "webp";
+
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -32,7 +34,11 @@ function loadImage(file: File): Promise<HTMLImageElement> {
   });
 }
 
-async function compressSingleImage(file: File, quality: number): Promise<OutputFile> {
+async function compressSingleImage(
+  file: File,
+  quality: number,
+  outputFormat: OutputFormat
+): Promise<OutputFile> {
   const img = await loadImage(file);
 
   const canvas = document.createElement("canvas");
@@ -44,21 +50,45 @@ async function compressSingleImage(file: File, quality: number): Promise<OutputF
     throw new Error("Could not create canvas context.");
   }
 
+  if (outputFormat === "jpeg") {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
   ctx.drawImage(img, 0, 0);
 
   const lower = file.name.toLowerCase();
-  const outputType =
-    lower.endsWith(".png") || file.type === "image/png" ? "image/png" : "image/jpeg";
+
+  let mimeType = "image/jpeg";
+  let extension = "jpg";
+
+  if (outputFormat === "webp") {
+    mimeType = "image/webp";
+    extension = "webp";
+  } else if (outputFormat === "jpeg") {
+    mimeType = "image/jpeg";
+    extension = "jpg";
+  } else {
+    if (lower.endsWith(".png") || file.type === "image/png") {
+      mimeType = "image/png";
+      extension = "png";
+    } else if (lower.endsWith(".webp") || file.type === "image/webp") {
+      mimeType = "image/webp";
+      extension = "webp";
+    } else {
+      mimeType = "image/jpeg";
+      extension = "jpg";
+    }
+  }
 
   const blob = await new Promise<Blob | null>((resolve) =>
-    canvas.toBlob(resolve, outputType, outputType === "image/png" ? undefined : quality)
+    canvas.toBlob(resolve, mimeType, mimeType === "image/png" ? undefined : quality)
   );
 
   if (!blob) {
     throw new Error(`Could not compress image: ${file.name}`);
   }
 
-  const extension = outputType === "image/png" ? "png" : "jpg";
   const baseName = file.name.replace(/\.[^.]+$/, "");
   const outputName = `${baseName}-compressed.${extension}`;
 
@@ -75,6 +105,7 @@ export default function CompressImagePage() {
   const [files, setFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [quality, setQuality] = useState<number>(0.72);
+  const [outputFormat, setOutputFormat] = useState<OutputFormat>("jpeg");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [results, setResults] = useState<OutputFile[]>([]);
@@ -136,7 +167,7 @@ export default function CompressImagePage() {
     try {
       const output: OutputFile[] = [];
       for (const file of files) {
-        const compressed = await compressSingleImage(file, quality);
+        const compressed = await compressSingleImage(file, quality, outputFormat);
         output.push(compressed);
       }
       setResults(output);
@@ -162,8 +193,8 @@ export default function CompressImagePage() {
         <div className="section-head">
           <h1>Compress Image</h1>
           <p>
-            Reduce image file size in your browser so uploads stop failing. Great for
-            email attachments, form portals, and websites with size limits.
+            Reduce image file size in your browser so uploads stop failing. For screenshots
+            and PNG files, converting to JPG usually gives much smaller results.
           </p>
         </div>
 
@@ -216,6 +247,19 @@ export default function CompressImagePage() {
             <label>Selected quality</label>
             <input value={`${Math.round(quality * 100)}%`} readOnly />
           </div>
+
+          <div className="form-row" style={{ gridColumn: "1 / -1" }}>
+            <label htmlFor="format">Output format</label>
+            <select
+              id="format"
+              value={outputFormat}
+              onChange={(e) => setOutputFormat(e.target.value as OutputFormat)}
+            >
+              <option value="jpeg">Convert to JPG (best for smaller files)</option>
+              <option value="webp">Convert to WebP</option>
+              <option value="original">Keep original format</option>
+            </select>
+          </div>
         </div>
 
         <div className="hero-actions">
@@ -248,7 +292,7 @@ export default function CompressImagePage() {
               const saved = item.originalSize - item.size;
               const percent =
                 item.originalSize > 0
-                  ? Math.max(0, Math.round((saved / item.originalSize) * 100))
+                  ? Math.round((saved / item.originalSize) * 100)
                   : 0;
 
               return (
