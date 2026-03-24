@@ -7,6 +7,18 @@ export default function sitemap() {
       lastModified: new Date(),
     },
     {
+      url: `${baseUrl}/resume-upload-fixer`,
+      lastModified: new Date(),
+    },
+    {
+      url: `${baseUrl}/pdf-too-large-to-upload`,
+      lastModified: new Date(),
+    },
+    {
+      url: `${baseUrl}/iphone-photo-wont-upload`,
+      lastModified: new Date(),
+    },
+    {
       url: `${baseUrl}/resize-image`,
       lastModified: new Date(),
     },
