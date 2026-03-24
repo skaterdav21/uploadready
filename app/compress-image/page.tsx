@@ -1,16 +1,22 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import JSZip from "jszip";
 import LoadingOverlay from "../../components/LoadingOverlay";
 
 type OutputFile = {
   name: string;
   url: string;
+  width: number;
+  height: number;
   size: number;
-  originalSize: number;
 };
 
-type OutputFormat = "original" | "jpeg" | "webp";
+const presets = [
+  { label: "Email ready", width: 1200, height: 1200 },
+  { label: "Web ready", width: 1600, height: 1600 },
+  { label: "Form upload ready", width: 1000, height: 1000 },
+];
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -34,79 +40,96 @@ function loadImage(file: File): Promise<HTMLImageElement> {
   });
 }
 
-async function compressSingleImage(
+async function resizeSingleImage(
   file: File,
-  quality: number,
-  outputFormat: OutputFormat
+  maxWidth?: number,
+  maxHeight?: number,
+  preserveAspect = true
 ): Promise<OutputFile> {
   const img = await loadImage(file);
 
+  let targetWidth = maxWidth || img.width;
+  let targetHeight = maxHeight || img.height;
+
+  if (preserveAspect) {
+    const widthRatio = maxWidth ? maxWidth / img.width : Number.POSITIVE_INFINITY;
+    const heightRatio = maxHeight ? maxHeight / img.height : Number.POSITIVE_INFINITY;
+    const ratio = Math.min(widthRatio, heightRatio, 1);
+
+    targetWidth = Math.round(img.width * ratio);
+    targetHeight = Math.round(img.height * ratio);
+  } else {
+    targetWidth = maxWidth || img.width;
+    targetHeight = maxHeight || img.height;
+  }
+
   const canvas = document.createElement("canvas");
-  canvas.width = img.width;
-  canvas.height = img.height;
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
 
   const ctx = canvas.getContext("2d");
   if (!ctx) {
     throw new Error("Could not create canvas context.");
   }
 
-  if (outputFormat === "jpeg") {
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
+  ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
-  ctx.drawImage(img, 0, 0);
-
-  const lower = file.name.toLowerCase();
-
-  let mimeType = "image/jpeg";
-  let extension = "jpg";
-
-  if (outputFormat === "webp") {
-    mimeType = "image/webp";
-    extension = "webp";
-  } else if (outputFormat === "jpeg") {
-    mimeType = "image/jpeg";
-    extension = "jpg";
-  } else {
-    if (lower.endsWith(".png") || file.type === "image/png") {
-      mimeType = "image/png";
-      extension = "png";
-    } else if (lower.endsWith(".webp") || file.type === "image/webp") {
-      mimeType = "image/webp";
-      extension = "webp";
-    } else {
-      mimeType = "image/jpeg";
-      extension = "jpg";
-    }
-  }
+  const originalType = file.type || "image/jpeg";
+  const outputType =
+    originalType === "image/png"
+      ? "image/png"
+      : originalType === "image/webp"
+        ? "image/webp"
+        : "image/jpeg";
 
   const blob = await new Promise<Blob | null>((resolve) =>
-    canvas.toBlob(resolve, mimeType, mimeType === "image/png" ? undefined : quality)
+    canvas.toBlob(resolve, outputType, outputType === "image/png" ? undefined : 0.92)
   );
 
   if (!blob) {
-    throw new Error(`Could not compress image: ${file.name}`);
+    throw new Error(`Could not resize image: ${file.name}`);
   }
 
+  const extension =
+    outputType === "image/png" ? "png" : outputType === "image/webp" ? "webp" : "jpg";
+
   const baseName = file.name.replace(/\.[^.]+$/, "");
-  const outputName = `${baseName}-compressed.${extension}`;
+  const outputName = `${baseName}-${targetWidth}x${targetHeight}.${extension}`;
 
   return {
     name: outputName,
     url: URL.createObjectURL(blob),
+    width: targetWidth,
+    height: targetHeight,
     size: blob.size,
-    originalSize: file.size,
   };
 }
 
-export default function CompressImagePage() {
+async function downloadAllAsZip(results: OutputFile[], zipName: string) {
+  const zip = new JSZip();
+
+  for (const item of results) {
+    const response = await fetch(item.url);
+    const blob = await response.blob();
+    zip.file(item.name, blob);
+  }
+
+  const content = await zip.generateAsync({ type: "blob" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(content);
+  a.download = zipName;
+  a.click();
+}
+
+export default function ResizeImagePage() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-  const [quality, setQuality] = useState<number>(0.72);
-  const [outputFormat, setOutputFormat] = useState<OutputFormat>("jpeg");
+  const [width, setWidth] = useState<string>("1200");
+  const [height, setHeight] = useState<string>("");
+  const [preserveAspect, setPreserveAspect] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [zipLoading, setZipLoading] = useState(false);
   const [error, setError] = useState("");
   const [results, setResults] = useState<OutputFile[]>([]);
 
@@ -154,9 +177,22 @@ export default function CompressImagePage() {
     setPreviewUrls(accepted.map((file) => URL.createObjectURL(file)));
   }
 
-  async function runCompression() {
+  async function runResize() {
     if (files.length === 0) {
       setError("Add at least one image first.");
+      return;
+    }
+
+    const parsedWidth = width ? Number(width) : undefined;
+    const parsedHeight = height ? Number(height) : undefined;
+
+    if (!parsedWidth && !parsedHeight) {
+      setError("Enter a width, a height, or both.");
+      return;
+    }
+
+    if ((parsedWidth && parsedWidth <= 0) || (parsedHeight && parsedHeight <= 0)) {
+      setError("Width and height must be greater than 0.");
       return;
     }
 
@@ -167,15 +203,21 @@ export default function CompressImagePage() {
     try {
       const output: OutputFile[] = [];
       for (const file of files) {
-        const compressed = await compressSingleImage(file, quality, outputFormat);
-        output.push(compressed);
+        const resized = await resizeSingleImage(file, parsedWidth, parsedHeight, preserveAspect);
+        output.push(resized);
       }
       setResults(output);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong while compressing.");
+      setError(err instanceof Error ? err.message : "Something went wrong while resizing.");
     } finally {
       setLoading(false);
     }
+  }
+
+  function applyPreset(preset: { width: number; height: number }) {
+    setWidth(String(preset.width));
+    setHeight(String(preset.height));
+    setPreserveAspect(true);
   }
 
   function downloadFile(url: string, filename: string) {
@@ -185,16 +227,26 @@ export default function CompressImagePage() {
     a.click();
   }
 
+  async function handleZipDownload() {
+    try {
+      setZipLoading(true);
+      await downloadAllAsZip(results, "uploadready-resized-images.zip");
+    } finally {
+      setZipLoading(false);
+    }
+  }
+
   return (
     <main className="page">
-      {loading && <LoadingOverlay text="Compressing images..." />}
+      {loading && <LoadingOverlay text="Resizing images..." />}
+      {zipLoading && <LoadingOverlay text="Creating ZIP download..." />}
 
       <section className="section">
         <div className="section-head">
-          <h1>Compress Image</h1>
+          <h1>Resize Image</h1>
           <p>
-            Reduce image file size in your browser so uploads stop failing. For screenshots
-            and PNG files, converting to JPG usually gives much smaller results.
+            Resize JPG, PNG, and WebP images right in your browser. Great for forms,
+            websites, email attachments, and portals with upload limits.
           </p>
         </div>
 
@@ -231,45 +283,61 @@ export default function CompressImagePage() {
 
         <div className="tool-controls">
           <div className="form-row">
-            <label htmlFor="quality">Quality</label>
+            <label htmlFor="width">Width (px)</label>
             <input
-              id="quality"
-              type="range"
-              min="0.3"
-              max="0.95"
-              step="0.01"
-              value={quality}
-              onChange={(e) => setQuality(Number(e.target.value))}
+              id="width"
+              type="number"
+              min="1"
+              value={width}
+              onChange={(e) => setWidth(e.target.value)}
+              placeholder="1200"
             />
           </div>
 
           <div className="form-row">
-            <label>Selected quality</label>
-            <input value={`${Math.round(quality * 100)}%`} readOnly />
+            <label htmlFor="height">Height (px)</label>
+            <input
+              id="height"
+              type="number"
+              min="1"
+              value={height}
+              onChange={(e) => setHeight(e.target.value)}
+              placeholder="Leave blank to auto-scale"
+            />
           </div>
 
-          <div className="form-row" style={{ gridColumn: "1 / -1" }}>
-            <label htmlFor="format">Output format</label>
-            <select
-              id="format"
-              value={outputFormat}
-              onChange={(e) => setOutputFormat(e.target.value as OutputFormat)}
-            >
-              <option value="jpeg">Convert to JPG (best for smaller files)</option>
-              <option value="webp">Convert to WebP</option>
-              <option value="original">Keep original format</option>
-            </select>
+          <div className="toggle-row">
+            <input
+              id="preserve"
+              type="checkbox"
+              checked={preserveAspect}
+              onChange={(e) => setPreserveAspect(e.target.checked)}
+            />
+            <label htmlFor="preserve">Preserve aspect ratio</label>
           </div>
+        </div>
+
+        <div className="preset-row">
+          {presets.map((preset) => (
+            <button
+              key={preset.label}
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => applyPreset(preset)}
+            >
+              {preset.label}
+            </button>
+          ))}
         </div>
 
         <div className="hero-actions">
           <button
             type="button"
             className="btn btn-primary"
-            onClick={runCompression}
+            onClick={runResize}
             disabled={loading || files.length === 0}
           >
-            {loading ? "Compressing..." : "Compress images"}
+            {loading ? "Resizing..." : "Resize images"}
           </button>
         </div>
 
@@ -281,26 +349,31 @@ export default function CompressImagePage() {
       <section className="section">
         <div className="section-head">
           <h2>Results</h2>
-          <p>Download each compressed image after processing completes.</p>
+          <p>Download each resized image after processing completes.</p>
         </div>
 
         {results.length === 0 ? (
-          <div className="empty-state">Your compressed images will appear here.</div>
+          <div className="empty-state">Your resized images will appear here.</div>
         ) : (
-          <div className="results-list">
-            {results.map((item) => {
-              const saved = item.originalSize - item.size;
-              const percent =
-                item.originalSize > 0
-                  ? Math.round((saved / item.originalSize) * 100)
-                  : 0;
+          <>
+            <div className="hero-actions hero-actions-left">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleZipDownload}
+                disabled={zipLoading}
+              >
+                {zipLoading ? "Creating ZIP..." : "Download all as ZIP"}
+              </button>
+            </div>
 
-              return (
+            <div className="results-list">
+              {results.map((item) => (
                 <div key={item.url} className="result-card">
                   <div>
                     <h3>{item.name}</h3>
                     <p>
-                      Before: {formatBytes(item.originalSize)} • After: {formatBytes(item.size)} • Saved: {percent}%
+                      {item.width} × {item.height} • {formatBytes(item.size)}
                     </p>
                   </div>
 
@@ -312,25 +385,25 @@ export default function CompressImagePage() {
                     Download
                   </button>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          </>
         )}
       </section>
 
       <section className="section">
         <div className="section-head">
           <h2>Related tools</h2>
-          <p>Use these together when you need cleaner upload-ready files.</p>
+          <p>More tools will be added here as we build them out.</p>
         </div>
 
         <div className="card-grid">
-          <a className="tool-card" href="/resize-image">
+          <a className="tool-card" href="/compress-image">
             <div className="tool-card-top">
-              <h3>Resize Image</h3>
+              <h3>Compress Image</h3>
               <span>Ready</span>
             </div>
-            <p>Shrink dimensions before or after compression.</p>
+            <p>Reduce file size after resizing.</p>
           </a>
 
           <a className="tool-card" href="/heic-to-jpg">
@@ -338,7 +411,7 @@ export default function CompressImagePage() {
               <h3>HEIC to JPG</h3>
               <span>Ready</span>
             </div>
-            <p>Convert iPhone photos into a more compatible format.</p>
+            <p>Convert iPhone photos into a more upload-friendly format.</p>
           </a>
 
           <a className="tool-card" href="/compress-pdf">
@@ -346,7 +419,7 @@ export default function CompressImagePage() {
               <h3>Compress PDF</h3>
               <span>Ready</span>
             </div>
-            <p>Reduce PDF size for upload limits.</p>
+            <p>Shrink PDFs that are too large for upload limits.</p>
           </a>
         </div>
       </section>
