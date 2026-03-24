@@ -73,6 +73,28 @@ export default function MergePdfPage() {
     setFiles(accepted);
   }
 
+  function moveFileUp(index: number) {
+    if (index === 0) return;
+    setFiles((prev) => {
+      const next = [...prev];
+      [next[index - 1], next[index]] = [next[index], next[index - 1]];
+      return next;
+    });
+  }
+
+  function moveFileDown(index: number) {
+    setFiles((prev) => {
+      if (index >= prev.length - 1) return prev;
+      const next = [...prev];
+      [next[index], next[index + 1]] = [next[index + 1], next[index]];
+      return next;
+    });
+  }
+
+  function removeFile(index: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  }
+
   async function runMerge() {
     if (files.length < 2) {
       setError("Select at least 2 PDFs to merge.");
@@ -105,9 +127,22 @@ export default function MergePdfPage() {
         <div className="section-head">
           <h1>Merge PDF</h1>
           <p>
-            Combine multiple PDF files into a single document directly in your
-            browser.
+            Combine multiple PDF files into one clean document directly in your
+            browser. Reorder files before merging so the final document is in the
+            exact order you want.
           </p>
+        </div>
+
+        <div className="pdf-tool-nav">
+          <a href="/merge-pdf" className="pdf-tool-link pdf-tool-link-active">
+            Merge PDF
+          </a>
+          <a href="/split-pdf" className="pdf-tool-link">
+            Split PDF
+          </a>
+          <a href="/compress-pdf" className="pdf-tool-link">
+            Compress PDF
+          </a>
         </div>
 
         <div
@@ -133,11 +168,52 @@ export default function MergePdfPage() {
           />
         </div>
 
+        {files.length > 0 && (
+          <div className="results-list" style={{ marginTop: 20 }}>
+            {files.map((file, index) => (
+              <div key={`${file.name}-${index}`} className="result-card">
+                <div>
+                  <h3>{index + 1}. {file.name}</h3>
+                  <p>{formatBytes(file.size)}</p>
+                </div>
+
+                <div className="file-action-row">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => moveFileUp(index)}
+                    disabled={index === 0}
+                  >
+                    Up
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => moveFileDown(index)}
+                    disabled={index === files.length - 1}
+                  >
+                    Down
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => removeFile(index)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="hero-actions">
           <button
             className="btn btn-primary"
             onClick={runMerge}
-            disabled={loading}
+            disabled={loading || files.length < 2}
           >
             {loading ? "Merging..." : "Merge PDFs"}
           </button>
@@ -151,6 +227,9 @@ export default function MergePdfPage() {
       <section className="section">
         <div className="section-head">
           <h2>Result</h2>
+          <p>
+            Merge multiple PDFs in your preferred order and download the final file.
+          </p>
         </div>
 
         {!result ? (
