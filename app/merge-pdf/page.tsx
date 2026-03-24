@@ -1,5 +1,11 @@
 "use client";
 
+export const metadata = {
+  title: "Merge PDF Files — Combine Documents for Upload",
+  description:
+    "Merge multiple PDFs into one file for job applications, forms, and document uploads.",
+};
+
 export const dynamic = "force-dynamic";
 
 import { useMemo, useRef, useState } from "react";
